@@ -1,34 +1,37 @@
-const express = require("express");
-const { DefaultAzureCredential } = require("@azure/identity");
-const { SecretClient } = require("@azure/keyvault-secrets");
+const express = require('express');
+const { DefaultAzureCredential } = require('@azure/identity');
+const { SecretClient } = require('@azure/keyvault-secrets');
 
-// Create an Express app
+// Create an Express server
 const app = express();
+const port = 3000;
 
-// Initialize the Azure Key Vault client
-const vaultUrl = "<your-key-vault-url>";
+// Azure Key Vault details
+const keyVaultName = 'your-key-vault-name';
+const keyVaultUrl = `https://${keyVaultName}.vault.azure.net`;
+
+// Create a SecretClient instance
 const credential = new DefaultAzureCredential();
-const client = new SecretClient(vaultUrl, credential);
+const client = new SecretClient(keyVaultUrl, credential);
 
-// Define an API route to retrieve a secret
-app.get("/secret/:name", async (req, res) => {
-  const secretName = req.params.name;
+// Define an API endpoint to retrieve a secret
+app.get('/api/secret/:secretName', async (req, res) => {
+  const secretName = req.params.secretName;
 
   try {
-    // Retrieve the secret value from Azure Key Vault
+    // Retrieve the secret from Azure Key Vault
     const secret = await client.getSecret(secretName);
-    const secretValue = secret.value;
 
-    // Return the secret value in the response
-    res.json({ secretName, secretValue });
+    // Return the secret value as the response
+    res.send(secret.value);
   } catch (error) {
-    console.error("Error retrieving secret:", error.message);
-    res.status(500).json({ error: "Failed to retrieve secret" });
+    // Handle any errors
+    console.error(`Error retrieving secret: ${error.message}`);
+    res.status(500).send('Error retrieving secret');
   }
 });
 
-// Start the Express server
-const port = 3000;
+// Start the server
 app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+  console.log(`Server running on http://localhost:${port}`);
 });
